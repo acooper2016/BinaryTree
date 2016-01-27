@@ -2,62 +2,63 @@ import java.io.*;
 import java.util.Scanner;
 import java.util.Iterator;
 
-public class TwentyQuestions
+/**
+*Functional TwentyQuestions game.  Runs through a preset decision tree of questions organized in a BinaryTree.  Uses recursive algorithms
+*to save and later load that decision tree from session to session, allowing the program to work better and better with each 
+*play.
+*
+*@author Aaron Cooper
+*@version 1.1
+*/
+public class TwentyQuestions1
 {
-
-	public static void main(String[] args)
+	
+	/*
+	*Shell that runs the game.  Prompts user whether they want to play, then runs playGame method if they do want to play.
+	*/
+	public static void main(String[]args)
 	{
-		/*Scanner reader = new Scanner(System.in);
+		Scanner reader = new Scanner(System.in);
 		System.out.println("Welcome to 20 questions!");
-		while(true)
+		while(true)									
 		{
-			System.out.println("would you like to play again?");
-			String answer = reader.next();
+			System.out.println("would you like to play?");
+			String answer = reader.nextLine();
 			if(answer.equals("y"))
-				playGame(loadData());
+				playGame(loadTree());
 			else if(answer.equals("n"))
 				break;
 			else
 				System.out.println("Please enter y or n");
+			System.out.println("Play again, if you wish.");
 		}
-		System.out.println("goodbye!");*/
-		
-		BinaryTree<String> root = new BinaryTree<String>("is it alive?");
-		root.setLeft(new BinaryTree<String>("toaster"));
-		root.setRight(new BinaryTree<String>("tiger"));
-		playGame(root);
+		System.out.println("goodbye!");
 	}
-
-	/**
-	*Runs a single session of the game.  Navigates a binary tree of questions, in which the left pointer represents a no 
-	*answer and the right pointer represents a yes answer.  Leaves of the tree are objects.  If an incorrect guess is made
-	*by the game, will alter the tree to add another question input by the user, accommodating for the wrong guess and the 
-	*correct answer.  Takes in an existing BinaryTree of strings containing this data, and writes the tree to a text document upon 
-	*completion.
-	*
-	*@param data BinaryTree of strings, containing each question and final answer.
+	/*
+	*Runs the game.  Takes in a BinaryTree of data, called using the loadTree() method in main, as the decision tree for 
+	*guesses.  Leaf branches are guesses, and other branches are questions.  Yes answers navigate to the right, no answers to the left.
+	*If the game guesses incorrectly, will prompt user for a new question, and adds a branch with that question to the tree, with the wrong
+	*guess and the item the player was thinking of as its leaves.  Then, saves data to a text document.
 	*/
 	private static void playGame(BinaryTree<String> data)
 	{
-		System.out.println(data);
 		Scanner reader = new Scanner(System.in);
-		BinaryTree<String> lastNode;
 		BinaryTree<String> currentNode = data;
+		
+		//Navigates through the tree by prompting user for question answers
 		while(true)
 		{
 			if(!currentNode.isLeaf())
 			{
 				System.out.println(currentNode.getValue());
 				System.out.println("y/n");
-				String answer = reader.next();
+				String answer = reader.nextLine();
 				if(answer.equals("y"))
 				{
-					lastNode = currentNode;
 					currentNode = currentNode.getRight();
 				}
 				else if(answer.equals("n"))	
 				{
-					lastNode = currentNode;
 					currentNode = currentNode.getLeft();
 				}
 				else
@@ -68,9 +69,9 @@ public class TwentyQuestions
 				break;
 			}	
 		}
-		
+		//Makes a guess when the game hits a leaf.  Prompts user for correctness.
 		System.out.println("Is it a " + currentNode.getValue() + "?");
-		String answer = reader.next();
+		String answer = reader.nextLine();
 		while(true)
 		{
 			if(answer.equals("y"))
@@ -91,16 +92,16 @@ public class TwentyQuestions
 		System.out.println("You beat me!");		
 		System.out.println("What were you thinking of?");
 		String wrongAnswer = currentNode.getValue();
-		String rightAnswer = reader.next();
+		String rightAnswer = reader.nextLine();
 		
 		System.out.println("What is a good question that separates your answer from my guess?");
-		String newQuestion = reader.next();
+		String newQuestion = reader.nextLine();
 		
 		System.out.println("Is the answer to this question for your object y or n?");
 		String response;
 		while(true)
 		{
-			response = reader.next();
+			response = reader.nextLine();
 			if(response.equals("y"))
 				break;
 			if(response.equals("n"))
@@ -124,12 +125,61 @@ public class TwentyQuestions
 			currentNode.setRight(new BinaryTree<String>(wrongAnswer));
 		}
 		
-		System.out.println(data);
 		
-		//saveData(data);	
+		saveTree(data);	
 	}
 	
-	public static BinaryTree<String> loadData()
+	/**
+	*Uses the PrintWriter class to write the BinaryTree containing 20 questions's data into a text document
+	*/
+	private static void saveTree(BinaryTree<String> root)
+	{
+		PrintWriter writer = null;
+		try
+		{
+    		writer = new PrintWriter("SaveData.twq");
+		}
+		catch(FileNotFoundException ex )
+		{
+			System.out.println("File could not be created");
+			System.exit(1);
+		}
+		
+		
+		String s = write(root);
+		writer.println(s + ";");
+		writer.close();
+	}
+	
+	/**
+	*Recursively converts the BinaryTree containing the game's data into a String, using "punctuation markers" to 
+	*indicate the structure of the tree.
+	*/
+	private static String write(BinaryTree<String> branch)
+	{
+		String s = "";
+		s += branch.getValue();
+		if(branch.isLeaf())
+			s += ";";
+		else
+		{
+			s += ",";
+			s += write(branch.getLeft());
+			s += write(branch.getRight());
+		}
+		return s;
+	}
+	
+	/*write algorithm is simple recursion.  Base Case is a leaf node, appending the node's data with a ';' character.  Non Leaves
+	*Get a ',' character after them.  The String is essentially the preorder of the Binary Tree.  Because all branches have two
+	*children or none, never just one on the left or right, all that needs to be indicated is whether or not a given piece of data
+	*is a leaf in order to convert the Linear stream of data into a fully fleshed out tree.*/
+	
+	/**
+	*Uses the Scanner class to convert the document containing the saved data into a String.  Then, uses the read method to
+	*convert that String into the original saved BinaryTree
+	*/
+	private static BinaryTree<String> loadTree()
 	{
 		String pathname = "SaveData.twq";
 		File file = new File(pathname);
@@ -146,115 +196,49 @@ public class TwentyQuestions
 			return newRoot;
 		}
 		
-		String dataString = "";
+		String data = "";
+		String[] dataString = new String[1];
+		dataString[0] = data;
 		
 		while(input.hasNextLine())
 		{
-			dataString += input.nextLine();
+			dataString[0] += input.nextLine();
 		}
 		
-		Vector<String> inorderList = new Vector<String>();
-		String addend = "";
-		
-		for(int i = 0; i < dataString.length(); i++)
+		return read(dataString);
+	}
+	/**
+	*Reads the text document with the saved data, converting it back into the original BinaryTree, recursively.
+	*Essentially reverses the SaveData algorithm.
+	*/
+	private static BinaryTree<String> read(String[] s)
+	{
+	
+		BinaryTree<String> root = new BinaryTree<String>(nextWord(s));
+		if(s[0].charAt(0) == ';')
+			s[0] = s[0].substring(1);
+		else 
 		{
-			if(i < dataString.length() - 5 && dataString.substring(i, i + 6).equals("null&"))
-			{
-				inorderList.add(null);
-				i += 4;
-			}
-			else if(dataString.charAt(i) == '#')
-			{	
-				inorderList.add(addend);
-				addend = "";
-			}
-			else
-			{
-				addend += dataString.charAt(i);
-			}
+			s[0] = s[0].substring(1);
+			root.setLeft(read(s));
+			root.setRight(read(s));
 		}
-		
-		BinaryTree<String> root = new BinaryTree<String>(inorderList.get(inorderList.size() / 2));
-				
-		constructTree(root, inorderList, inorderList.size() / 2, (inorderList.size() / 4) + 1);		
-		
 		return root;
 	}
 	
-	private static void constructTree(BinaryTree<String> root, Vector<String> items, int currInd, int iterationSize)
-	{
-		System.out.println(iterationSize);
-		if(iterationSize >= 1)
-		{	
-			root.setLeft(new BinaryTree<String>(items.get(currInd - iterationSize)));
-			root.setRight(new BinaryTree<String>(items.get(currInd + iterationSize)));
-			constructTree(root.getLeft(), items, currInd - iterationSize, iterationSize /2);
-			constructTree(root.getRight(), items, currInd + iterationSize, iterationSize / 2);
-		}
-	}
-
 	/**
-	*Saves the binary tree used in a single game of Twenty Questions into a document.  This document can be used
-	*to start other games of TwentyQuestions with a consistently expanding dataset between sessions.  Uses FillTree to 
-	*create a tree that can be consistently stored.  Uses the phrase "null&" to represent a null branch, chosen because it is highly
-	*unlikely to be a question or answer.  
-	*
-	*@param data BinaryTree containing the data from a single game of TwentyQuestions.
-	*/
-	private static void saveData(BinaryTree<String> data)
+	*Returns the next word from in the data String, conantenating the beginning of the data String up until the next punctuation marker
+	*/ 
+	private static String nextWord(String[] s)
 	{
-		fillTree(data, data.height() - 1); 	
-		PrintWriter writer = null;
-		try
+		String last = "";
+		while(s[0].charAt(0) != ';' && s[0].charAt(0) != ',')
 		{
-			writer = new PrintWriter("SaveData.twq");
+			last += s[0].charAt(0);
+			s[0] = s[0].substring(1);
 		}
-		catch(FileNotFoundException ex )
-		{
-			System.out.println("File could not be created");
-			System.exit(1);
-		}	
-		//System.out.println("arrival");
-		
-		Iterator iterator = data.inorderIterator();
-		//System.out.println("get");
-
-		while(iterator.hasNext());
-		{
-			//System.out.println("loop");
-			String writeString;
-			if(iterator.next() == null)
-				writeString = "null&";
-			else
-				writeString =(String) iterator.next();
-			
-			writer.append(writeString);
-			writer.append("#");
-		}
-		
-		//System.out.println("done");
-	}	
+		return last;
+	}
 	
-	/**
-	*Takes in a BinaryTree of strings and adds branches until it is full.  New branches contain null.  
-	*Used to easily parse a BinaryTree of 20q data into a document of saved data.
-	*
-	*@param data Root of the binary tree to be filled.
-	*@param numDeep counter used to make sure branches are not added past data's height.
-	*/
-	private static void fillTree(BinaryTree<String> data, int numDeep)
-	{
-		if(numDeep > 0)
-		{
-			if(data.getLeft() == null)
-				data.setLeft(new BinaryTree<String>(null));
-			if(data.getRight() == null)
-				data.setRight(new BinaryTree<String>(null));
-			fillTree(data.getLeft(), numDeep - 1);
-			fillTree(data.getRight(), numDeep - 1);
-		}
-		
-		
-		
-	}
+	
 }
